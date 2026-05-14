@@ -88,6 +88,8 @@ deploy:
       kubeconfig:   /root/jianghao/k8s/kubeconfig
       overlay:      infra/k8s/overlays/dev
       namespace:    picks-dev
+      # deployments: required, non-empty list (used in `kubectl rollout
+      # restart deploy/<name>`). Empty list = step 5 fails.
       deployments:
         - picks-api
         - picks-web

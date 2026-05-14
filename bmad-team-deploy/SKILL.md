@@ -43,7 +43,7 @@ deploy:
       kubeconfig: /root/jianghao/k8s/kubeconfig
       overlay: infra/k8s/overlays/dev # path inside remote_repo
       namespace: picks-dev
-      deployments:                    # what to rollout-restart
+      deployments:                    # what to rollout-restart (required, must be non-empty)
         - picks-api
         - picks-web
       smoke_url: https://picks-dev.dataget.cc/healthz
@@ -105,6 +105,8 @@ ssh ${jump_user}@${jump_host} \
 ```
 
 ### 5. Restart deployments (force re-pull of rolling branch tags)
+
+**Pre-condition**: `${deployments}` must be a non-empty list. With an empty list the command below expands to `kubectl rollout restart -n <ns>` and exits with `required resource not specified`. If your env genuinely has nothing to rollout-restart (rare), define `pre_rollout_only: true` in the env block and skip this step — but the current schema requires at least one deployment.
 
 ```bash
 ssh ${jump_user}@${jump_host} \

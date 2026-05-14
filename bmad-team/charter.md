@@ -38,10 +38,12 @@ cross-tool message bus:
 ```
 <!-- ORCHESTRATE:CLAIM agent=manyu-claude-1 story=6.2 -->
 <!-- ORCHESTRATE:DECISION agent=manyu-claude-1 story=6.2 timestamp=2026-05-14T09:11:03Z -->
-<!-- ORCHESTRATE:RESPONSE agent=orchestrator decision=accept_residual_findings -->
-<!-- ORCHESTRATE:COMPLETION agent=manyu-claude-1 story=6.2 reviewer=codex rounds=2 -->
+<!-- ORCHESTRATE:RESPONSE agent=orchestrator decision=accept_residual_findings in_reply_to=2113456789 -->
+<!-- ORCHESTRATE:COMPLETION agent=manyu-claude-1 story=6.2 reviewer=codex rounds=2 ci=a1b2c3d -->
 <!-- ORCHESTRATE:APPROVAL agent=orchestrator pr=#42 -->
 ```
+
+> Examples above are conforming. See [protocol.md](./protocol.md) for the full required-field list per marker — copy from there, not from the snippet, if you're hand-writing markers.
 
 A Claude agent and a Codex agent can collaborate on the same repo
 **without ever talking to each other directly** — they read each

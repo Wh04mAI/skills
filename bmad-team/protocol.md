@@ -32,7 +32,7 @@ All markers follow:
 Constraints:
 
 1. **Single-line.** Wrapping breaks the search index.
-2. **Keys are lowercase alphanumeric + underscore.** Values are URL-safe (no spaces, `,`, `=` in raw form).
+2. **Keys are lowercase alphanumeric + underscore.** Values are unquoted opaque tokens: any printable ASCII character is allowed **except** whitespace, `,`, and `=`. Characters like `:`, `#`, `/`, `T`, `Z`, `.`, `-` are explicitly permitted (the ISO 8601 timestamps and `pr=#<N>` references below rely on this).
 3. **Prefix is literally `ORCHESTRATE`.** Do not rename without a protocol version bump.
 4. **First marker on a PR body line.** Trailing prose is fine.
 
@@ -72,10 +72,16 @@ the specific `story=N.M` or `issue=N` before doing any work.
 <!-- ORCHESTRATE:DECISION agent=<agent-id> story=<N.M> timestamp=<ISO8601> -->
 ```
 
+…or, when the work was claimed against a GitHub issue rather than a story:
+
+```html
+<!-- ORCHESTRATE:DECISION agent=<agent-id> issue=<N> timestamp=<ISO8601> -->
+```
+
 | Field | Meaning |
 |---|---|
 | `agent` | Asker |
-| `story` | Scope |
+| `story` *or* `issue` | Scope — match whichever was used in the originating `CLAIM` |
 | `timestamp` | ISO 8601 UTC, `2026-05-14T09:11:03Z` |
 
 **Lifecycle**: Posted as a new PR **comment** when the agent hits an
@@ -102,7 +108,7 @@ agent may choose a safe default or block.
 |---|---|
 | `agent` | The orchestrator that decided (often `orchestrator`, but may be a human's GitHub login if hand-decided) |
 | `decision` | One of the options from the `DECISION`'s `Options` field |
-| `in_reply_to` | The comment-id of the `DECISION` (so multiple open decisions can be disambiguated) |
+| `in_reply_to` | The **REST API numeric comment ID** of the `DECISION` — the `id` field returned by `gh pr view <N> --json comments`. Not the GraphQL node ID, not the `#issuecomment-…` URL anchor. One canonical form so responders and pollers agree. |
 
 **Lifecycle**: Posted as a new PR comment by the orchestrator. The
 dev agent polls for it (its monitor reads `gh pr view --json
@@ -114,10 +120,16 @@ comments` periodically) and resumes work.
 <!-- ORCHESTRATE:COMPLETION agent=<agent-id> story=<N.M> reviewer=<model> rounds=<N> ci=<sha> -->
 ```
 
+…or for issue-claimed work:
+
+```html
+<!-- ORCHESTRATE:COMPLETION agent=<agent-id> issue=<N> reviewer=<model> rounds=<N> ci=<sha> -->
+```
+
 | Field | Meaning |
 |---|---|
 | `agent` | The writer |
-| `story` | Scope |
+| `story` *or* `issue` | Scope — match whichever was used in the originating `CLAIM` |
 | `reviewer` | The cross-model reviewer (e.g. `codex`) — `none` if review was skipped (< 50 LOC) |
 | `rounds` | Number of review rounds run |
 | `ci` | The commit SHA that has green CI |
@@ -157,8 +169,9 @@ Three segments, lowercase, hyphen-separated:
 
 Examples: `manyu-claude-1`, `manyu-codex-2`, `haojianggod-claude-1`.
 
-**Invariant**: an agent ID is unique by construction. Two devs never
-share a `<github-login>`, so cross-machine collision is impossible.
+**Cross-machine uniqueness** holds by construction — two devs never share a `<github-login>`.
+
+**Same-machine concurrent startup** of two agents with the same `<login>+<tool>` can race during the brief window between `gh pr list` (seq scan) and `git push -u origin <branch>` (claim publication). Mitigation: if `git push -u origin <agent-id>/...` fails because the branch already exists on `origin`, the agent **must** retry with `seq+1` and re-publish the claim. Do not force-push to take over an existing branch.
 
 ## Claim invariants
 
