@@ -1,0 +1,17 @@
+# Local-only overrides (never commit secrets / host-specific paths)
+**/customize.sh
+**/customize.local.sh
+**/customize.local.toml
+_bmad/team/config.yaml
+
+# Python caches in orchestrate lib
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp

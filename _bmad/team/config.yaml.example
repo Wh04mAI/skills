@@ -1,0 +1,112 @@
+# BMAD-Team per-project config.
+#
+# Copy this to {project_root}/_bmad/team/config.yaml and fill in the values
+# for your project. Skills under .claude/skills/bmad-team-* read from this file.
+#
+# This file is the single source of project-specific values for BMAD-Team.
+# Skills must not hard-code hosts, namespaces, deployment names, etc.
+
+# ─────────────────────────────────────────────────────────────────────
+# Agents — shared by bmad-team-claim, bmad-team-orchestrate
+# ─────────────────────────────────────────────────────────────────────
+agents:
+  # Max parallel in-flight stories per agent (NOT per repo). 2 is the
+  # recommended cap — beyond that, context drift makes review unreliable.
+  max_in_flight_per_agent: 2
+
+  # Max total concurrent agents the orchestrator will dispatch.
+  max_concurrent_agents: 4
+
+  # Agent ID format (informational; skills derive at runtime).
+  # See bmad-team/protocol.md for the spec.
+  id_format: "<github-login>-<tool>-<seq>"
+
+  # The branch where merged PRs land. Story branches are cut from here.
+  base_branch: dev
+
+
+# ─────────────────────────────────────────────────────────────────────
+# Protocol — ORCHESTRATE:* markers (see bmad-team/protocol.md)
+# ─────────────────────────────────────────────────────────────────────
+protocol:
+  # Marker prefix. Do not change unless you're forking the protocol.
+  markers_prefix: ORCHESTRATE
+
+  # Path to decision rules — auto-RESPONSE logic for DECISION events.
+  decision_rules: _bmad/team/decision-rules.yaml
+
+  # SLA for orchestrator/human reply to a DECISION before the agent
+  # may pick a safe default or block.
+  decision_response_sla_minutes: 30
+
+
+# ─────────────────────────────────────────────────────────────────────
+# Review — bmad-team-review
+# ─────────────────────────────────────────────────────────────────────
+review:
+  cross_model:
+    enabled: true
+
+    # Skip review entirely below this LOC threshold.
+    skip_below_loc: 50
+
+    # Max review rounds before escalating residual P1+ findings via DECISION.
+    max_rounds: 2
+
+    # Path → reviewer model routing. Empty / missing = use skill default
+    # mapping in lib/reviewer-mapping.toml.
+    reviewer_map_override: null
+
+  # If true, bmad-team-review checks GitHub CI (gh pr checks --watch)
+  # before posting COMPLETION. Recommended.
+  require_ci_green: true
+
+
+# ─────────────────────────────────────────────────────────────────────
+# Verify — bmad-team-verify (deferred to v0.1; placeholder schema)
+# ─────────────────────────────────────────────────────────────────────
+verify:
+  # When implemented: project provides ONE shell hook that returns 0 on
+  # pass / non-zero on fail. The skill ships the SSH/rsync/setup orchestration
+  # generically.
+  hook: null              # e.g. ./scripts/integrate-test.sh
+  remote_host: null       # e.g. vm-test-1
+  required_before_approval: false
+
+
+# ─────────────────────────────────────────────────────────────────────
+# Deploy — bmad-team-deploy
+# ─────────────────────────────────────────────────────────────────────
+deploy:
+  # Map of env-name → env config. The /bmad-team-deploy <env> command
+  # looks up <env> in this map.
+  envs:
+    dev:
+      jump_host:    t1.dataget.cc
+      jump_user:    root
+      remote_repo:  /opt/picks
+      kubeconfig:   /root/jianghao/k8s/kubeconfig
+      overlay:      infra/k8s/overlays/dev
+      namespace:    picks-dev
+      deployments:
+        - picks-api
+        - picks-web
+      smoke_url:    https://picks-dev.dataget.cc/healthz
+      timeout:      120s
+      notes: |
+        Dev does not deploy pipelines CronJob; empty reports list is normal.
+
+    staging:
+      jump_host:    t1.dataget.cc
+      jump_user:    root
+      remote_repo:  /opt/picks
+      kubeconfig:   /root/jianghao/k8s/kubeconfig
+      overlay:      infra/k8s/overlays/staging
+      namespace:    picks-staging
+      deployments:
+        - picks-api
+        - picks-web
+      smoke_url:    https://picks-staging.dataget.cc/healthz
+      timeout:      120s
+      notes: |
+        Staging mirrors production config; treat deploys with care.
