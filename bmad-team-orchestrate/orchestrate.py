@@ -87,11 +87,11 @@ def setup_logging(debug=False):
 # ------------------------------------------------------------ config + deps --
 
 def load_config():
-    """Merge customize.toml with _bmad/custom/orchestrate.toml override."""
+    """Merge customize.toml with _bmad/team/orchestrate.toml override."""
     with open(skill_root / "customize.toml", 'rb') as f:
         config = tomllib.load(f)
 
-    project_override = Path.cwd() / "_bmad/custom/orchestrate.toml"
+    project_override = Path.cwd() / "_bmad/team/orchestrate.toml"
     if project_override.exists():
         with open(project_override, 'rb') as f:
             override = tomllib.load(f)
@@ -325,7 +325,7 @@ def cmd_help():
 /orchestrate --debug ...          Verbose logging to console
 
 Story IDs: shorthand '6.1' / '6-1' or full '6-1-template-query-api'.
-Config:    customize.toml (base) + _bmad/custom/orchestrate.toml (override).
+Config:    customize.toml (base) + _bmad/team/orchestrate.toml (override).
 Prompts:   first prompt copied to clipboard, all saved to /tmp/orchestrate-prompts/.
 Logs:      ~/.claude/logs/orchestrate-YYYYMMDD.log
 """)

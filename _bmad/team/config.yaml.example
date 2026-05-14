@@ -3,8 +3,16 @@
 # Copy this to {project_root}/_bmad/team/config.yaml and fill in the values
 # for your project. Skills under .claude/skills/bmad-team-* read from this file.
 #
-# This file is the single source of project-specific values for BMAD-Team.
+# This file is the single source of cross-skill project-specific values.
 # Skills must not hard-code hosts, namespaces, deployment names, etc.
+#
+# Skill-internal overrides (knobs only one skill cares about — dispatch
+# templates, poll intervals, security allowlists) live alongside this
+# file as per-skill TOMLs:
+#
+#   _bmad/team/config.yaml        ← this file (cross-skill shared values)
+#   _bmad/team/orchestrate.toml   ← bmad-team-orchestrate internals (optional)
+#   _bmad/team/decision-rules.yaml← auto-RESPONSE rules for ORCHESTRATE:DECISION
 
 # ─────────────────────────────────────────────────────────────────────
 # Agents — shared by bmad-team-claim, bmad-team-orchestrate

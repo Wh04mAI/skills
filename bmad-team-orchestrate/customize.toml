@@ -1,5 +1,5 @@
 # Orchestrate Skill Configuration
-# Base defaults — override in _bmad/custom/orchestrate.toml
+# Base defaults — per-project override in _bmad/team/orchestrate.toml
 
 [orchestrator]
 # Core orchestration settings

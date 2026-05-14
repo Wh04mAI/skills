@@ -31,7 +31,7 @@ def test_config_loading():
     print(f"   Base max_concurrent_agents: {base_max}")
 
     # Check for project override
-    project_override = Path.cwd() / "_bmad/custom/orchestrate.toml"
+    project_override = Path.cwd() / "_bmad/team/orchestrate.toml"
     if project_override.exists():
         with open(project_override, 'rb') as f:
             override = tomllib.load(f)

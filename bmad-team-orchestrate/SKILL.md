@@ -127,7 +127,7 @@ comments with `<!-- ORCHESTRATE:* -->` markers — no local queue file.
 ## Configuration
 
 - Base: `.claude/skills/bmad-team-orchestrate/customize.toml`
-- Project override: `_bmad/custom/orchestrate.toml`
+- Project override: `_bmad/team/orchestrate.toml` (lives alongside the unified `_bmad/team/config.yaml`; skill-internal knobs stay in TOML, cross-skill shared values go in `config.yaml`)
 - Decision rules: `.claude/skills/bmad-team-orchestrate/decision-rules.yaml`
 - Logs: `~/.claude/logs/orchestrate-YYYYMMDD.log`
 

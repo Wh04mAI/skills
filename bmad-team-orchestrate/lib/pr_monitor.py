@@ -264,7 +264,7 @@ def main():
     with open(config_path, 'rb') as f:
         config = tomllib.load(f)
 
-    project_override = Path.cwd() / "_bmad/custom/orchestrate.toml"
+    project_override = Path.cwd() / "_bmad/team/orchestrate.toml"
     if project_override.exists():
         with open(project_override, 'rb') as f:
             override = tomllib.load(f)

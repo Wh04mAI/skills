@@ -62,7 +62,7 @@ required_checks = ["Lint", "Test", "Replay Test"]
 trusted_authors = ["haojianggod", "wswuai"]
 ```
 
-### Project override (`_bmad/custom/orchestrate.toml`)
+### Project override (`_bmad/team/orchestrate.toml`)
 
 Same structure, deep-merged on top of the base. Override only the keys
 you need:
