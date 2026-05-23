@@ -4,8 +4,8 @@ Unified monitor combining decision queue and PR status monitoring.
 Runs both monitors in a single loop to avoid spawning two processes.
 
 Note: code review is no longer triggered by the monitor. Dev agents run
-`/cross-model-review` themselves before posting COMPLETION (see
-.claude/skills/cross-model-review/). The monitor only handles DECISION
+`/bmad-team-review` themselves before posting COMPLETION (see
+.claude/skills/bmad-team-review/). The monitor only handles DECISION
 escalation and PR status sync.
 """
 

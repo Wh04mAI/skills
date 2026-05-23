@@ -17,6 +17,30 @@ BMAD-Team kicks in when:
 - You want pre-merge review by a model **different** from the one that wrote the code.
 - A story is not "done" when the PR merges — it is done when it reaches a deployed environment.
 
+## Direction (2026-05-23): GitHub Issues are the canon work registry
+
+BMAD-Team initially leaned on BMAD's `sprint-status.yaml` as its source of truth
+for what work exists and who's doing it. We're moving off that. File-based sprint
+tracking is rigid and drifts (one branch's sprint file diverges from another's),
+and the team is small enough that GitHub Issues + draft-PR-as-claim covers it
+without a sidecar registry.
+
+Concretely:
+
+- **`bmad-team-claim`** (canon): claim a GitHub issue. PR title `<verb>: <slug> (#<N>)`,
+  body `Closes #<N>`, branch `<agent-id>/issue-<N>-<slug>`. This is what
+  `bmad-team-merge` expects.
+- **`bmad-team-claim`** (alternative, documented): story-flow for projects that
+  still run sprint-status files.
+- **`bmad-team-orchestrate`**: still reads sprint-status today. v0.2 plan is to
+  add a `github_issues` work-source adapter (the abstraction already exists in
+  `lib/adapters/`) and make it the default. The sprint adapter stays as an
+  opt-in. Not done in 2026-05-23 — tracked as follow-up.
+- This charter's "three gaps" table below still describes BMAD-Team in terms of
+  the sprint-status framing because that's where it started. The narrative will
+  be rewritten when the orchestrate adapter lands; the **plumbing** decision
+  (issues > sprint files) is final as of this revision.
+
 ## The three gaps it fills
 
 | BMAD core | Gap | BMAD-Team addition |
@@ -75,8 +99,10 @@ oversight.
 | Skill | One-line | Notes |
 |---|---|---|
 | [bmad-team-claim](../bmad-team-claim/SKILL.md) | Publish a draft PR with HTML claim marker; one agent, one worktree | Lifted from Picks/multi-agent-claim |
+| [bmad-team-dev](../bmad-team-dev/SKILL.md) | Drive implement → verify → review inner loop between claim and merge; emit final brief at HUMAN CONFIRM | Lifted from dev-loop |
+| [bmad-team-review](../bmad-team-review/SKILL.md) | Pick a reviewer ≠ writer based on paths; max 2 rounds; P3 ignore | Lifted from cross-model-review (identical in both projects); called by `bmad-team-dev` |
+| [bmad-team-merge](../bmad-team-merge/SKILL.md) | Squash-merge a ready PR + atomically clean up worktree, local/remote branches, issue | Lifted from merge-pr |
 | [bmad-team-orchestrate](../bmad-team-orchestrate/SKILL.md) | Dispatch agents; monitor PR markers; apply decision rules | Lifted from vmcp/orchestrate (Python lib) |
-| [bmad-team-review](../bmad-team-review/SKILL.md) | Pick a reviewer ≠ writer based on paths; max 2 rounds; P3 ignore | Lifted from cross-model-review (identical in both projects) |
 | [bmad-team-deploy](../bmad-team-deploy/SKILL.md) | `apply -k` + rollout restart on jump host, per env | Consolidated from `deploy-to-dev` + `deploy-to-staging` |
 | `bmad-team-verify` (deferred) | Run integration tests on a shared remote env | vmcp's `integrate-test` is too project-specific; needs generic redesign — see Roadmap |
 
@@ -99,7 +125,7 @@ find one doing so, file a bug.
 
 ### v0 (this version, internal)
 - ✅ Charter + protocol spec
-- ✅ `bmad-team-claim`, `bmad-team-review`, `bmad-team-orchestrate`, `bmad-team-deploy` migrated
+- ✅ `bmad-team-claim`, `bmad-team-dev`, `bmad-team-review`, `bmad-team-merge`, `bmad-team-orchestrate`, `bmad-team-deploy` migrated
 - ✅ Per-project config template
 
 ### v0.1 (next 2 sprints, still internal)
@@ -142,4 +168,4 @@ Briefly, the alternatives and why we did not adopt them:
 
 - This charter and `protocol.md` are reviewed quarterly.
 - Each skill has its own SKILL.md; this charter is the meta-doc, not a per-skill spec.
-- Issues against this repo: file under `Invist-AI/skills`.
+- Issues against this repo: file under `Wh04mAI/skills`.

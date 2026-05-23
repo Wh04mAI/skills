@@ -1,4 +1,4 @@
-# Per-host overrides for cross-model-review.
+# Per-host overrides for bmad-team-review.
 # Sourced by lib/run-review.sh before the reviewer dispatch.
 # Edit this file to set CLI commands and flags that vary by host.
 

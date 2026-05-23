@@ -8,8 +8,8 @@
 #   {"event":"approval_needed","pr":88,"story":"8-1-otel"}
 #
 # Note: code review is NOT triggered by the monitor. Dev agents run
-# `/cross-model-review` themselves before posting COMPLETION (see
-# .claude/skills/cross-model-review/ and AGENTS.md "Pre-merge self-review").
+# `/bmad-team-review` themselves before posting COMPLETION (see
+# .claude/skills/bmad-team-review/ and AGENTS.md "Pre-merge self-review").
 # The monitor watches for two things:
 #   1. DECISION markers that need an orchestrator response
 #   2. PRs that finished (COMPLETION + green CI + no APPROVAL yet) so the

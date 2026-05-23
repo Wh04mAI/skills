@@ -50,7 +50,7 @@ agent_id_sequence = ["1", "2", "3", "4", "5", "6"]
 # Required CI checks that must be green before the orchestrator posts
 # APPROVAL. Merging is always human-driven; the orchestrator never
 # auto-merges. Code review itself is run by the dev agent via
-# `/cross-model-review` before posting COMPLETION — not by the monitor.
+# `/bmad-team-review` before posting COMPLETION — not by the monitor.
 required_checks = ["Lint", "Test", "Replay Test"]
 
 [security]

@@ -248,7 +248,7 @@ GitHub-specific.
 This document, slightly genericized (remove BMAD specifics, keep
 just the protocol), becomes `pr-claim-protocol`. Publication target:
 
-- GitHub repo: `Invist-AI/pr-claim-protocol` (or similar)
+- GitHub repo: `Wh04mAI/pr-claim-protocol` (or similar)
 - GitHub Discussions post on `bmad-code-org/BMAD-METHOD` to seed adoption
 - Possibly a short writeup on the Anthropic engineering blog or our own
 

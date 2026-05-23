@@ -126,19 +126,19 @@ echo "=== Commit-vs-diff self-audit ==="
 git log --reverse "origin/dev..HEAD" --pretty=format:"%n=== %h %s ===%n%b%n" --stat
 ```
 
-## Step 4: Self-review via /cross-model-review (mandatory)
+## Step 4: Self-review via /bmad-team-review (mandatory)
 
 Before `gh pr ready` and before posting COMPLETION, run a cross-model
-review (skill at `.claude/skills/cross-model-review/`):
+review (skill at `.claude/skills/bmad-team-review/`):
 
 ```bash
 ensure_in_worktree || exit 1
-python3 .claude/skills/cross-model-review/lib/select-reviewer.py claude --base dev
+python3 .claude/skills/bmad-team-review/lib/select-reviewer.py claude --base dev
 # Read the chosen reviewer from the JSON, then:
-.claude/skills/cross-model-review/lib/run-review.sh <reviewer> dev $PR_NUMBER 1
+.claude/skills/bmad-team-review/lib/run-review.sh <reviewer> dev $PR_NUMBER 1
 ```
 
-Decision tree (full rules in `.claude/skills/cross-model-review/SKILL.md`):
+Decision tree (full rules in `.claude/skills/bmad-team-review/SKILL.md`):
 
 - **0 P0/P1/P2 or all P3** → post review on PR + COMPLETION + `gh pr ready`. P3 noted in footer, not actioned.
 - **P0 / architectural / spec-violation** → ORCHESTRATE:DECISION (don't fix on your own)
@@ -172,7 +172,7 @@ gh pr comment $PR_NUMBER --body '<!-- ORCHESTRATE:COMPLETION agent={agent_id} st
 ```'
 ```
 
-Code review is already done — Step 4's `/cross-model-review` posted
+Code review is already done — Step 4's `/bmad-team-review` posted
 findings on the PR and you only reach this point if the decision tree
 said "post COMPLETION". The orchestrator does **not** trigger another
 review on COMPLETION; it only escalates `ORCHESTRATE:DECISION` markers
@@ -186,7 +186,7 @@ and stop — the human operator will merge.
 
 If you need to address fresh feedback (review comment, push from a
 collaborator, CI flake fix), push fixups, re-run Step 4's
-`/cross-model-review` if the change is non-trivial, then post a new
+`/bmad-team-review` if the change is non-trivial, then post a new
 COMPLETION and resume polling.
 
 ```bash

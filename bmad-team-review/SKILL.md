@@ -9,12 +9,9 @@ metadata:
   role: workflow
   scope: review
   output-format: markdown PR comment
-  part-of: bmad-team
 ---
 
 # bmad-team-review
-
-> Part of [BMAD-Team](../bmad-team/charter.md). Runs after `bmad-team-claim` + BMAD `dev-story`, before posting `<!-- ORCHESTRATE:COMPLETION -->` (see [protocol.md](../bmad-team/protocol.md)).
 
 A dev agent invokes this skill once it has finished implementing a story and pushed code. The skill runs a code review using **a different model** than the one that wrote the code, decides whether the residual issues warrant a fixup loop, and either:
 

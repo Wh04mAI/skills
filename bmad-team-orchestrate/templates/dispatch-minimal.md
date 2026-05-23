@@ -117,17 +117,17 @@ decisions through chat.
    echo "→ If any commit message claims something not in its diff, STOP and fix it."
    ```
 
-7. **Self-review via /cross-model-review (mandatory)** — must run BEFORE
+7. **Self-review via /bmad-team-review (mandatory)** — must run BEFORE
    `gh pr ready` per AGENTS.md "Pre-merge self-review":
 
 ```bash
 ensure_in_worktree || exit 1
-python3 .claude/skills/cross-model-review/lib/select-reviewer.py claude --base {base_branch}
+python3 .claude/skills/bmad-team-review/lib/select-reviewer.py claude --base {base_branch}
 # Read the chosen reviewer from the JSON, then:
-.claude/skills/cross-model-review/lib/run-review.sh <reviewer> {base_branch} $PR_NUMBER 1
+.claude/skills/bmad-team-review/lib/run-review.sh <reviewer> {base_branch} $PR_NUMBER 1
 ```
 
-Decision tree (full rules in `.claude/skills/cross-model-review/SKILL.md`):
+Decision tree (full rules in `.claude/skills/bmad-team-review/SKILL.md`):
 
 - **0 P0/P1/P2 or all P3** → post review on PR + continue to step 8. P3 noted in footer.
 - **P0 / architectural / spec-violation** → ORCHESTRATE:DECISION (don't fix on your own)
@@ -173,7 +173,7 @@ gh pr comment $PR_NUMBER --body "<!-- ORCHESTRATE:COMPLETION agent={agent_id} st
 \`\`\`"
 ```
 
-Code review is already done — Step 7's `/cross-model-review` posted
+Code review is already done — Step 7's `/bmad-team-review` posted
 findings on the PR. The orchestrator does **not** trigger another
 review on COMPLETION; it only escalates `ORCHESTRATE:DECISION` markers
 and posts `ORCHESTRATE:APPROVAL` once everything is settled.
