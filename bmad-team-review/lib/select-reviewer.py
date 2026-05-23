@@ -136,6 +136,12 @@ def select(self_model: str, base: str) -> dict:
     co_candidates.extend(["codex", "claude", "deepseek"])
     for cand in co_candidates:
         cand_eff, _ = fallback_swap(cand, self_model, mapping)
+        # DeepSeek is the lowest-priority reviewer (see fallback_chains in
+        # reviewer-mapping.toml). Don't pull it in just to satisfy dual-
+        # review fanout — prefer degrading to a single non-self reviewer
+        # when codex / claude already cover the change.
+        if cand_eff == "deepseek":
+            continue
         if cand_eff != primary_eff and cand_eff != self_model:
             co_reviewer = cand_eff
             break

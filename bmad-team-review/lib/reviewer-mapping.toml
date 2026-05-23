@@ -18,9 +18,14 @@ escalate_on_repeated_finding = true
 escalate_on_architectural = true
 
 [fallback_chains]
+# DeepSeek is the lowest-priority reviewer across the board — it stays
+# available as a tie-breaker / last-resort but is never preferred over
+# codex or claude. A deepseek-written PR therefore degrades to codex
+# review by default (the next item in deepseek's own chain after self-
+# exclusion).
 codex = ["codex", "claude", "deepseek"]
 claude = ["claude", "codex", "deepseek"]
-deepseek = ["deepseek", "codex", "claude"]
+deepseek = ["codex", "claude", "deepseek"]
 
 # Mappings — each [[mappings]] block is one path category.
 
@@ -86,8 +91,9 @@ patterns = [
     "**/*.sh",
     "**/scripts/**",
 ]
-reviewer = "deepseek"
-rationale = "Idiomatic ops code, shell / yaml conventions"
+reviewer = "claude"
+co_reviewer = "codex"
+rationale = "Ops / deploy / CI is high-blast-radius — claude for sequencing & failure modes, codex for shell / YAML precision. Routed away from deepseek per the lowest-priority policy."
 
 [[mappings]]
 patterns = [
