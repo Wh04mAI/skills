@@ -37,11 +37,33 @@ done
 
 case "$REVIEWER" in
     codex)
-        if ! command -v codex >/dev/null 2>&1; then
-            echo "ERROR: codex CLI not found in PATH" >&2
+        # Prefer the openai/codex-plugin-cc companion runtime when the
+        # plugin is installed: it routes through a shared (warm) codex
+        # session and logs each run as a job, so other Claude Code
+        # sessions can observe progress via `/codex:status`. Fall back
+        # to the direct `codex` CLI otherwise.
+        #
+        # The companion path is versioned, so glob and pick the highest.
+        COMPANION=""
+        for candidate in $(ls -d "$HOME"/.claude/plugins/cache/openai-codex/codex/*/scripts/codex-companion.mjs 2>/dev/null | sort -V); do
+            COMPANION="$candidate"
+        done
+
+        if [[ -n "$COMPANION" && -f "$COMPANION" ]] && command -v node >/dev/null 2>&1; then
+            echo "[codex reviewer] via codex-plugin-cc companion ($(basename "$(dirname "$(dirname "$COMPANION")")")) — warm runtime, /codex:status observable" >&2
+            # companion's review subcommand does not accept --title; it
+            # also reviews working-tree or branch-vs-base. We force base
+            # review here because the skill always passes a base.
+            node "$COMPANION" review --wait --base "$BASE" 2>&1 | tee "$OUT"
+        elif command -v codex >/dev/null 2>&1; then
+            echo "[codex reviewer] via direct codex CLI — no shared runtime, no /codex:status visibility" >&2
+            echo "[codex reviewer] tip: install codex-plugin-cc for warm runtime + progress polling:" >&2
+            echo "                 /plugin marketplace add openai/codex-plugin-cc && /plugin install codex@openai-codex" >&2
+            codex review --base "$BASE" --title "$TITLE" 2>&1 | tee "$OUT"
+        else
+            echo "ERROR: neither codex-plugin-cc companion nor codex CLI found" >&2
             exit 2
         fi
-        codex review --base "$BASE" --title "$TITLE" 2>&1 | tee "$OUT"
         ;;
 
     claude)
