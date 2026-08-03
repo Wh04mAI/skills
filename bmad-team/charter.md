@@ -1,6 +1,6 @@
 # BMAD-Team — Charter
 
-**Status**: v0 (internal). Last revised: 2026-05-14.
+**Status**: v0.1 (internal). Last revised: 2026-08-02.
 
 ## What it is
 
@@ -41,13 +41,49 @@ Concretely:
   be rewritten when the orchestrate adapter lands; the **plumbing** decision
   (issues > sprint files) is final as of this revision.
 
+## Direction (2026-08-02): official-first — the inner loop belongs to bmad-loop
+
+BMAD upstream now ships [bmad-loop](https://github.com/bmad-code-org/bmad-loop)
+(v0.9.0, official external module): an unattended dev → verify → review → commit
+orchestrator with a deferred-work ledger, escalation/resolve flow, and —
+critically — **per-stage model adapters** (`[adapter.dev]` / `[adapter.review]`
+in policy.toml), which absorb BMAD-Team's writer ≠ reviewer invariant at the
+orchestrator level.
+
+What bmad-loop does **not** do (checked against v0.9.0): parallel fan-out
+(`max_parallel` is validated and clamped to 1), GitHub Issues/PRs as work
+registry, any cross-machine or cross-tool coordination, deploy past `done`.
+That is exactly the territory BMAD-Team keeps.
+
+Consequences, applied in this revision:
+
+- **BMAD-Team = the GitHub coordination layer.** Claim, marker protocol,
+  merge, and marker monitoring are the assets. The inner implement loop is
+  official territory — we do not compete with bmad-loop on it.
+- **`bmad-team-dev` is re-scoped** to the PR-flow shell: orient/plan, the two
+  operator briefings, and the PR/marker glue. When the project runs bmad-loop,
+  the inner iterate loop is delegated to it; the manual phases remain as the
+  fallback for projects without bmad-loop.
+- **`bmad-team-review` is repositioned**: the writer ≠ reviewer invariant is
+  now achievable in official config; what stays ours is path-based reviewer
+  routing, self-model exclusion chains, stop rules, and standalone PR-flow
+  review outside a loop run. Projects can override the mapping via
+  `_bmad/team/reviewer-mapping.toml` without touching the skill.
+- **`bmad-team-orchestrate`'s dispatch role is legacy.** Serial story driving
+  is bmad-loop's job today, and parallel fan-out is on its official roadmap.
+  We keep the marker monitor (`--monitor`: DECISION auto-response, APPROVAL)
+  — the part with no official counterpart. The sprint-status dispatch path is
+  frozen: no new features.
+- **`bmad-team-deploy` stays out of BMAD scope** (unchanged decision) — it is
+  generic CD glue, maintained for our projects, not part of the external story.
+
 ## The three gaps it fills
 
 | BMAD core | Gap | BMAD-Team addition |
 |---|---|---|
 | `sprint-status.yaml` is the source of truth for "who is doing what" | The file is branch-local; another agent on another worktree cannot see it | **`bmad-team-claim`** publishes the claim as a draft PR on `origin` with a machine-readable HTML marker. Any agent on any machine can `gh pr list --search` to discover claims. |
 | Stories are picked up serially by one agent | No dispatcher, no asynchronous decision protocol when an agent gets stuck | **`bmad-team-orchestrate`** runs as a monitor that polls PR comments, applies `decision-rules.yaml`, and posts auto-responses or escalates to a human. |
-| `bmad-code-review` is same-model adversarial review | A model rationalizes its own choices; cross-model ensembles catch ~17–30% more bugs (arxiv 2509.12629, 2510.21513) | **`bmad-team-review`** picks a reviewer model **different** from the writer, routed by what file paths the PR touches, with hard stop rules to prevent endless review loops. |
+| `bmad-code-review` is same-model adversarial review | A model rationalizes its own choices; cross-model ensembles catch ~17–30% more bugs (arxiv 2509.12629, 2510.21513) | **`bmad-team-review`** picks a reviewer model **different** from the writer, routed by what file paths the PR touches, with hard stop rules to prevent endless review loops. *(2026-08: official bmad-loop's `[adapter.review]` now covers writer ≠ reviewer inside loop runs — what remains ours is path-routing, fallback chains, stop rules, and standalone PR-flow review.)* |
 | BMAD stops at `done` | No representation of "shipped to dev" or "shipped to staging" | **`bmad-team-deploy`** wires the story to a kustomize-based k3s deploy via SSH + jump host. Story status can therefore evolve past `done` to `deployed-dev` / `deployed-staging` / `released`. |
 
 ## The novel piece — `ORCHESTRATE:*` markers
@@ -94,16 +130,20 @@ serialized only at the `HUMAN MERGE` step. The merge order is
 controlled by `bmad-team-orchestrate`'s decision rules and human
 oversight.
 
+As of 2026-08-02 the `BMAD-DEV` box is preferentially an official
+`bmad-loop` run inside the claim's worktree; the manual `dev-story`
+flow is the fallback (see `bmad-team-dev`'s scope note).
+
 ## Skill inventory
 
 | Skill | One-line | Notes |
 |---|---|---|
-| [bmad-team-claim](../bmad-team-claim/SKILL.md) | Publish a draft PR with HTML claim marker; one agent, one worktree | Lifted from Picks/multi-agent-claim |
-| [bmad-team-dev](../bmad-team-dev/SKILL.md) | Drive implement → verify → review inner loop between claim and merge; emit final brief at HUMAN CONFIRM | Lifted from dev-loop |
-| [bmad-team-review](../bmad-team-review/SKILL.md) | Pick a reviewer ≠ writer based on paths; max 2 rounds; P3 ignore | Lifted from cross-model-review (identical in both projects); called by `bmad-team-dev` |
-| [bmad-team-merge](../bmad-team-merge/SKILL.md) | Squash-merge a ready PR + atomically clean up worktree, local/remote branches, issue | Lifted from merge-pr |
-| [bmad-team-orchestrate](../bmad-team-orchestrate/SKILL.md) | Dispatch agents; monitor PR markers; apply decision rules | Lifted from vmcp/orchestrate (Python lib) |
-| [bmad-team-deploy](../bmad-team-deploy/SKILL.md) | `apply -k` + rollout restart on jump host, per env | Consolidated from `deploy-to-dev` + `deploy-to-staging` |
+| [bmad-team-claim](../bmad-team-claim/SKILL.md) | Publish a draft PR with HTML claim marker; one agent, one worktree | **Core asset** — no official counterpart |
+| [bmad-team-dev](../bmad-team-dev/SKILL.md) | PR-flow shell: orient/plan, two operator briefings, PR/marker glue; inner loop delegates to official bmad-loop when present | **Re-scoped 2026-08-02**; manual phases remain as fallback |
+| [bmad-team-review](../bmad-team-review/SKILL.md) | Pick a reviewer ≠ writer routed by paths; bounded rounds; P3 ignore | **Repositioned 2026-08-02** — invariant absorbed by bmad-loop `[adapter.review]`; routing + stop rules + standalone PR review stay ours |
+| [bmad-team-merge](../bmad-team-merge/SKILL.md) | Squash-merge a ready PR + atomically clean up worktree, local/remote branches, issue | **Core asset** — BMAD still stops at `done`; bmad-loop merges locally only |
+| [bmad-team-orchestrate](../bmad-team-orchestrate/SKILL.md) | Monitor PR markers; apply decision rules; post APPROVAL | **Monitor kept; dispatch legacy** (frozen pending bmad-loop parallel fan-out) |
+| [bmad-team-deploy](../bmad-team-deploy/SKILL.md) | `apply -k` + rollout restart on jump host, per env | Project CD glue; out of external/BMAD scope |
 | `bmad-team-verify` (deferred) | Run integration tests on a shared remote env | vmcp's `integrate-test` is too project-specific; needs generic redesign — see Roadmap |
 
 ## Per-project config
@@ -128,29 +168,42 @@ find one doing so, file a bug.
 - ✅ `bmad-team-claim`, `bmad-team-dev`, `bmad-team-review`, `bmad-team-merge`, `bmad-team-orchestrate`, `bmad-team-deploy` migrated
 - ✅ Per-project config template
 
-### v0.1 (next 2 sprints, still internal)
-- Adopt as submodule in Picks + vmcp; remove the per-project copies
-- Reconcile `bmad-team-orchestrate` decision rules so they work without vmcp-specific assumptions
+### v0.1 — official alignment (landed 2026-08-02)
+- ✅ Re-scope `bmad-team-dev` to the PR-flow shell; inner loop delegates to
+  official bmad-loop when the project runs it
+- ✅ Reposition `bmad-team-review`; add project-level mapping override
+  (`_bmad/team/reviewer-mapping.toml` beats the skill default)
+- ✅ Mark `bmad-team-orchestrate`'s dispatch role legacy; keep the marker monitor
+- ✅ Genericize `_bmad/team/config.yaml.example` (no real hosts/paths in a public repo)
+- Adopt as submodule in Picks + vmcp; remove the per-project copies (still open)
 - Define and ship `bmad-team-verify` as a generic shape (project provides
-  one shell hook that returns 0/non-zero); document via vmcp's existing
-  `integrate-test` as a reference implementation
+  one shell hook that returns 0/non-zero) — still open
 
 ### v0.2
-- Adopt [bmad-autonomous-development](https://github.com/stephenleo/bmad-autonomous-development)'s
-  dependency-graph idea for ordering stories — orthogonal to our PR-claim,
-  not a replacement
+- Express simple reviewer-routing cases directly as bmad-loop `policy.toml`
+  so projects that live entirely inside bmad-loop don't need `bmad-team-review`
+- Re-evaluate `bmad-team-orchestrate` when bmad-loop's parallel fan-out lands —
+  keep only what GitHub-side coordination still needs (likely: monitor only)
 
 ### v1.0 — external publication
 - Publish `bmad-team/protocol.md` as a standalone spec on GitHub
   Discussions / Pages under the name **`pr-claim-protocol`** (working title)
-- Submit `bmad-team-review` upstream against BMAD issues #446 and #685
+- ~~Submit `bmad-team-review` upstream against BMAD issues #446 and #685~~ —
+  window closed 2026-08: bmad-loop's `[adapter.review]` covers the invariant.
+  New target: contribute path-based routing to bmad-loop upstream if demand shows
 - Drop `bmad-team-deploy` from external scope — it's generic CD glue
 
 ## Watch list
 
+- **bmad-loop parallel fan-out** — v0.9.0 clamps `max_parallel` to 1 "until
+  parallel fan-out lands". When it lands, re-evaluate what's left of
+  `bmad-team-orchestrate` dispatch (likely: delete it) and whether claim/merge
+  should become bmad-loop hooks.
 - **GitHub Agent HQ** — if GitHub introduces a native draft-PR claim primitive, our HTML markers may become redundant. Re-evaluate quarterly.
-- **CodeRabbit / Greptile / Qodo Merge** — if any of them ship multi-model routing, the differentiation of `bmad-team-review` narrows.
-- **BMAD upstream issues** #446, #685, #761 — if upstream ships official multi-agent extensions, plan a graceful merge.
+- **CodeRabbit / Greptile / Qodo Merge** — if any of them ship multi-model routing, the differentiation of `bmad-team-review` narrows further.
+- **BMAD upstream issues** #446, #685, #761 — partially resolved: upstream shipped
+  bmad-loop (official module) with per-stage model adapters. The graceful merge
+  was executed in the 2026-08-02 revision of this charter.
 
 ## Why not just use $TOOL?
 
@@ -158,6 +211,7 @@ Briefly, the alternatives and why we did not adopt them:
 
 | Alternative | Why not |
 |---|---|
+| Official `bmad-loop` | Not an alternative — the foundation. We delegate the inner implement loop to it. It is serial (`max_parallel` clamped to 1), local, has no PR/issue work registry and no deploy; BMAD-Team is the GitHub coordination layer on top. |
 | `bmad-autonomous-development` | Uses dependency graph + counter, no PR-claim, same-vendor model tiering (sonnet/opus), no deploy. Useful for *ordering* only; doesn't solve cross-tool coordination. |
 | `ccswarm`, `claude-flow`, `parallel-worktrees` | Worktree mechanics only. No cross-tool coordination, no review, no deploy. |
 | `Delega` agent-to-agent code review | Configured per-task, not per-path. No stop rules. |

@@ -37,31 +37,31 @@ Where `<env>` is a key under `deploy.envs.*` in the project's
 deploy:
   envs:
     dev:
-      jump_host: t1.dataget.cc       # ssh user@host
-      jump_user: root
-      remote_repo: /opt/picks         # path on jump host
-      kubeconfig: /root/jianghao/k8s/kubeconfig
+      jump_host: jump.example.com     # ssh user@host
+      jump_user: ops
+      remote_repo: /opt/myapp         # path on jump host
+      kubeconfig: /home/ops/.kube/config
       overlay: infra/k8s/overlays/dev # path inside remote_repo
-      namespace: picks-dev
+      namespace: myapp-dev
       deployments:                    # what to rollout-restart (required, must be non-empty)
-        - picks-api
-        - picks-web
-      smoke_url: https://picks-dev.dataget.cc/healthz
+        - myapp-api
+        - myapp-web
+      smoke_url: https://dev.myapp.example.com/healthz
       timeout: 120s
       notes: |                        # surfaced in output after deploy
-        Dev does not deploy pipelines CronJob; empty reports list is normal.
+        Example: dev does not deploy the reporting CronJob; an empty reports list is normal.
 
     staging:
-      jump_host: t1.dataget.cc
-      jump_user: root
-      remote_repo: /opt/picks
-      kubeconfig: /root/jianghao/k8s/kubeconfig
+      jump_host: jump.example.com
+      jump_user: ops
+      remote_repo: /opt/myapp
+      kubeconfig: /home/ops/.kube/config
       overlay: infra/k8s/overlays/staging
-      namespace: picks-staging
+      namespace: myapp-staging
       deployments:
-        - picks-api
-        - picks-web
-      smoke_url: https://picks-staging.dataget.cc/healthz
+        - myapp-api
+        - myapp-web
+      smoke_url: https://staging.myapp.example.com/healthz
       timeout: 120s
       notes: |
         Staging mirrors production config; treat deploys with care.
@@ -169,7 +169,7 @@ deploy:<env>
 
 ## Anti-patterns
 
-- ❌ Hard-coding `t1.dataget.cc` or `/opt/picks` in this skill. Every host-specific value comes from project config.
+- ❌ Hard-coding a real jump host or repo path in this skill. Every host-specific value comes from project config.
 - ❌ Deploying without a PR being merged to base. This skill ships **the current branch**; if the integration branch has more commits, deploy from `base`, not from your feature branch.
 - ❌ Deploying to staging without first verifying on dev. The integration branch should already have green CI; staging is the production rehearsal.
 

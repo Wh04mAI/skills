@@ -1,6 +1,6 @@
 ---
 name: bmad-team-orchestrate
-description: Multi-agent orchestrator for parallel story implementation. Compact-by-default CLI; dispatch copies the first prompt to clipboard so users paste it into a new agent session. `--monitor` makes Claude the orchestrator — polls PR events and handles them in-session (decisions, approval). Code review is run by the dev agent itself via `/bmad-team-review` before posting COMPLETION. Invoke with `/orchestrate` (slash command alias retained for ergonomics).
+description: Multi-agent orchestrator for parallel story implementation. Compact-by-default CLI; dispatch copies the first prompt to clipboard so users paste it into a new agent session. `--monitor` makes Claude the orchestrator — polls PR events and handles them in-session (decisions, approval). The marker monitor is the retained core; the dispatch role is legacy (serial story driving is official bmad-loop territory). Code review is run by the dev agent itself via `/bmad-team-review` before posting COMPLETION. Invoke with `/orchestrate` (slash command alias retained for ergonomics).
 metadata:
   part-of: bmad-team
 ---
@@ -8,6 +8,15 @@ metadata:
 # bmad-team-orchestrate
 
 > Part of [BMAD-Team](../bmad-team/charter.md). Consumes the marker protocol defined in [protocol.md](../bmad-team/protocol.md). User-facing slash command is `/orchestrate` (short alias).
+
+> **Scope note (2026-08-02)**: the *dispatch* role (sprint-status /
+> file-scanner driven story dispatch) is **legacy** — serial story driving is
+> official [bmad-loop](https://github.com/bmad-code-org/bmad-loop) territory,
+> and parallel fan-out is on its official roadmap. What this skill keeps, and
+> what has no official counterpart, is the **marker monitor** (`--monitor`):
+> DECISION auto-response via `decision-rules.yaml` and APPROVAL posting over
+> GitHub PR markers. Dispatch remains usable for sprint-status projects but is
+> frozen — no new features. See the charter's "Direction (2026-08-02)".
 
 Multi-agent orchestrator for parallel story implementation. Output is
 compact by default (status ≤ 8 lines, dispatch ≤ 5 lines) so it doesn't

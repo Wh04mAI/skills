@@ -6,7 +6,11 @@ Reads `git diff --name-only <base>..HEAD` from the current repo and emits
 JSON: {reviewer, dual, co_reviewer, fallback_used, vote_breakdown,
 size, skip, reasoning}.
 
-Self-model exclusion is applied via the fallback chain in the YAML.
+Self-model exclusion is applied via the fallback chain in the TOML.
+
+Mapping resolution: <repo-root>/_bmad/team/reviewer-mapping.toml (project
+override) wins over the skill-default reviewer-mapping.toml next to this
+script. The override replaces the mapping wholesale — no merging.
 
 Usage:
     select-reviewer.py <self_model> [--base <branch>]
@@ -28,9 +32,21 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 MAPPING_PATH = SCRIPT_DIR / "reviewer-mapping.toml"
+PROJECT_OVERRIDE_REL = Path("_bmad") / "team" / "reviewer-mapping.toml"
 
 
 def load_mapping() -> dict:
+    try:
+        repo_root = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            capture_output=True, text=True, check=True,
+        ).stdout.strip()
+        override = Path(repo_root) / PROJECT_OVERRIDE_REL
+        if override.is_file():
+            with override.open("rb") as f:
+                return tomllib.load(f)
+    except subprocess.CalledProcessError:
+        pass
     with MAPPING_PATH.open("rb") as f:
         return tomllib.load(f)
 

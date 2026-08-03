@@ -10,9 +10,10 @@
 # templates, poll intervals, security allowlists) live alongside this
 # file as per-skill TOMLs:
 #
-#   _bmad/team/config.yaml        ← this file (cross-skill shared values)
-#   _bmad/team/orchestrate.toml   ← bmad-team-orchestrate internals (optional)
-#   _bmad/team/decision-rules.yaml← auto-RESPONSE rules for ORCHESTRATE:DECISION
+#   _bmad/team/config.yaml            ← this file (cross-skill shared values)
+#   _bmad/team/orchestrate.toml       ← bmad-team-orchestrate internals (optional)
+#   _bmad/team/decision-rules.yaml    ← auto-RESPONSE rules for ORCHESTRATE:DECISION
+#   _bmad/team/reviewer-mapping.toml  ← bmad-team-review path→reviewer mapping override (optional)
 
 # ─────────────────────────────────────────────────────────────────────
 # Agents — shared by bmad-team-claim, bmad-team-orchestrate
@@ -61,9 +62,9 @@ review:
     # Max review rounds before escalating residual P1+ findings via DECISION.
     max_rounds: 2
 
-    # Path → reviewer model routing. Empty / missing = use skill default
-    # mapping in lib/reviewer-mapping.toml.
-    reviewer_map_override: null
+    # Path → reviewer model routing: place _bmad/team/reviewer-mapping.toml
+    # at the repo root to replace the skill default (lib/reviewer-mapping.toml)
+    # wholesale. select-reviewer.py picks it up automatically.
 
   # If true, bmad-team-review checks GitHub CI (gh pr checks --watch)
   # before posting COMPLETION. Recommended.
@@ -90,33 +91,33 @@ deploy:
   # looks up <env> in this map.
   envs:
     dev:
-      jump_host:    t1.dataget.cc
-      jump_user:    root
-      remote_repo:  /opt/picks
-      kubeconfig:   /root/jianghao/k8s/kubeconfig
+      jump_host:    jump.example.com
+      jump_user:    ops
+      remote_repo:  /opt/myapp
+      kubeconfig:   /home/ops/.kube/config
       overlay:      infra/k8s/overlays/dev
-      namespace:    picks-dev
+      namespace:    myapp-dev
       # deployments: required, non-empty list (used in `kubectl rollout
       # restart deploy/<name>`). Empty list = step 5 fails.
       deployments:
-        - picks-api
-        - picks-web
-      smoke_url:    https://picks-dev.dataget.cc/healthz
+        - myapp-api
+        - myapp-web
+      smoke_url:    https://dev.myapp.example.com/healthz
       timeout:      120s
       notes: |
-        Dev does not deploy pipelines CronJob; empty reports list is normal.
+        Example: dev does not deploy the reporting CronJob; an empty reports list is normal.
 
     staging:
-      jump_host:    t1.dataget.cc
-      jump_user:    root
-      remote_repo:  /opt/picks
-      kubeconfig:   /root/jianghao/k8s/kubeconfig
+      jump_host:    jump.example.com
+      jump_user:    ops
+      remote_repo:  /opt/myapp
+      kubeconfig:   /home/ops/.kube/config
       overlay:      infra/k8s/overlays/staging
-      namespace:    picks-staging
+      namespace:    myapp-staging
       deployments:
-        - picks-api
-        - picks-web
-      smoke_url:    https://picks-staging.dataget.cc/healthz
+        - myapp-api
+        - myapp-web
+      smoke_url:    https://staging.myapp.example.com/healthz
       timeout:      120s
       notes: |
         Staging mirrors production config; treat deploys with care.

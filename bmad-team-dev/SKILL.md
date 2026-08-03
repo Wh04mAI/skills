@@ -1,9 +1,9 @@
 ---
 name: bmad-team-dev
-description: Drive the implementation phase between claim and merge. Reads the issue/spec, plans, then runs an inner loop of implement → verify → bmad-team-review → maybe-fixup until review converges, and emits a structured final briefing for operator sign-off before merge. Cross-model review is part of this loop, not a downstream skill. Use right after bmad-team-claim's execute briefing has been confirmed by the operator, or when the user says "开工", "开始干", "implement #N", "dev #N", "做 issue X", "继续干".
+description: Drive the implementation phase between claim and merge as the PR-flow shell. Reads the issue/spec, plans, then either delegates the inner iterate loop to the official bmad-loop module (preferred when the project runs it) or runs the manual implement → verify → bmad-team-review → maybe-fixup loop until review converges, and emits a structured final briefing for operator sign-off before merge. Use right after bmad-team-claim's execute briefing has been confirmed by the operator, or when the user says "开工", "开始干", "implement #N", "dev #N", "做 issue X", "继续干".
 license: MIT
 metadata:
-  version: "2.0.0"
+  version: "2.1.0"
   domain: workflow
   triggers: dev loop, implement, 开工, 开始干, 做 issue, dev story, write code, iterate, fixup, smoke test, run tests, wrap up, 收工
   role: workflow
@@ -18,6 +18,26 @@ The phase between claim and merge used to be unmanaged. An agent would claim, th
 2. **Self-graded review** — the agent declares the work done without a different-model check, and a real bug ships.
 
 This skill makes the phase explicit. It owns the **inner agent-autonomous loop** (implement ↔ bmad-team-review) and produces two operator-facing artifacts: nothing in the middle, and a **final briefing** at the end.
+
+## Scope note (2026-08-02) — delegate the inner loop when bmad-loop is present
+
+BMAD's official [bmad-loop](https://github.com/bmad-code-org/bmad-loop) module
+now owns unattended dev → verify → review → commit iteration, with per-stage
+model adapters (`[adapter.dev]` / `[adapter.review]` — writer ≠ reviewer at
+orchestrator level), a deferred-work ledger, and escalation handling. This
+skill does not compete with it:
+
+- **Project runs bmad-loop** → this skill is the **PR-flow shell**: run
+  Phase 1–2 (orient + plan), hand the iteration to a bmad-loop run inside the
+  claim's worktree, then rejoin at Phase 7 (final brief + markers).
+  Cross-model review happens inside bmad-loop via `[adapter.review]`;
+  `bmad-team-review` is then only needed for its path-routing/stop rules or a
+  standalone re-check on the finished PR.
+- **No bmad-loop** → Phases 3–6 below are the manual fallback loop, unchanged.
+
+Either way, this skill keeps what bmad-loop has no concept of: the claim
+context, the two HUMAN CONFIRM gates, the operator briefings, and the
+`ORCHESTRATE:*` markers on the PR.
 
 ## The pipeline this skill sits in
 

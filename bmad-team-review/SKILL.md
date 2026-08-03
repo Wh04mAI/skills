@@ -3,7 +3,7 @@ name: bmad-team-review
 description: Self-driven code review by a model different from the writing model. Dev agent invokes this before posting COMPLETION. Skill picks a reviewer (codex / claude / deepseek) based on what the PR touches, runs the review, and decides whether to fixup, post completion, or escalate. Use when the dev agent has finished a story and wants pre-merge review without waiting for an operator. Triggers - "review my changes", "code review this PR", "review before completion", "self-review".
 license: MIT
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
   domain: workflow
   triggers: code review, self-review, pre-merge review, cross-model review
   role: workflow
@@ -15,13 +15,32 @@ metadata:
 
 A dev agent invokes this skill once it has finished implementing a story and pushed code. The skill runs a code review using **a different model** than the one that wrote the code, decides whether the residual issues warrant a fixup loop, and either:
 
-- pushes a fixup and re-runs (max 2 rounds), or
+- pushes a fixup and re-runs (bounded by `stopping_rules.max_rounds` in the mapping TOML), or
 - posts COMPLETION (with reviewer trace), or
 - escalates via ORCHESTRATE:DECISION when residual P1+ issues exceed budget.
 
 ## Core invariant
 
 **The reviewer model must be different from the writing model.** Same-model self-review is suspect — the writer rationalizes its own choices. Cross-model review is the trick that makes self-driven review trustworthy.
+
+## Relationship to official bmad-loop (2026-08-02)
+
+BMAD's official [bmad-loop](https://github.com/bmad-code-org/bmad-loop) module
+supports per-stage model adapters (`[adapter.dev]` / `[adapter.review]` in
+policy.toml), so inside a bmad-loop run the writer ≠ reviewer invariant is
+enforced by official config — you do not need this skill there. What this
+skill still adds:
+
+- **Path-based reviewer routing** — which model reviews what kind of change,
+  with self-model exclusion and fallback chains. bmad-loop's adapter is
+  static per stage.
+- **Stop rules** — bounded rounds, P3 ignore, repeated-finding and
+  architectural escalation via `ORCHESTRATE:DECISION` markers.
+- **Standalone PR-flow review** — reviewing a pushed PR outside any loop run
+  (the bmad-team-claim → dev → merge pipeline).
+
+If your project lives entirely inside bmad-loop and one static reviewer per
+stage is enough, configure `[adapter.review]` there and skip this skill.
 
 ## When to invoke
 
@@ -39,20 +58,29 @@ Do **not** invoke if:
 
 Run `lib/select-reviewer.py <self_model>` from the repo root. It reads `git diff --name-only <base>..HEAD` and emits a JSON object with the chosen reviewer, fallbacks, and reasoning.
 
-Path-based mapping (`reviewer-mapping.yaml`):
+The live mapping is `lib/reviewer-mapping.toml` (glob patterns → reviewer
+votes, first match per file, majority across the diff). A project replaces
+the whole mapping by shipping `_bmad/team/reviewer-mapping.toml` at its repo
+root — `select-reviewer.py` prefers it over the skill default. The shipped
+default is tuned for a Go control-plane repo; treat it as a reference
+implementation, not a rule set your project must fit.
 
-| Path pattern | Primary reviewer | Why |
+Default routing by change domain:
+
+| Change domain | Primary reviewer | Why |
 |---|---|---|
-| `cmd/egress-gateway/**`, `cmd/host-agent/**`, `internal/hostagent/**`, system / data-plane / syscall code | codex | Linux internals, syscall correctness, fd / socket lifecycle |
-| `internal/workflow/**`, `internal/api/service/**`, saga / state machine | claude | Multi-state reasoning, cross-module consistency |
-| `migrations/**`, `internal/db/query/**`, schema / sqlc | codex + claude (dual) | Codex for column / FK / PK precision; Claude for ADR / contract alignment |
-| `internal/api/handler/**`, `internal/api/response/**`, API boundary | claude | Boundary lints, contract alignment |
-| `tools/lint/**`, lint code itself | codex | Tight code, type-level precision |
-| `_bmad-output/**`, ADR / spec / `*.md` | claude | Long-form prose, argumentative reasoning |
-| `deploy/ansible/**`, `.github/workflows/**`, `Dockerfile`, ops scripting | deepseek | Idiomatic ops code |
-| Pure refactor / dedup / cleanup PR | deepseek | Pattern recognition |
-| `*_test.go`, test code | codex | Test logic = tight code |
-| Cross-epic / impacts ≥ 5 dirs | claude + codex (dual, claude first) | Architecture pass + correctness pass |
+| Systems / syscall / FFI / data-plane code | codex | Linux internals, syscall correctness, fd / socket lifecycle |
+| Multi-module state machines, sagas, workflows | claude | Multi-state reasoning, cross-module consistency |
+| Migrations / schema / query layers | codex + claude (dual) | Codex for column / FK / PK precision; Claude for ADR / contract alignment |
+| API boundary (handlers, responses, contracts) | claude | Boundary lints, contract alignment |
+| Lint / codegen tooling | codex | Tight code, AST-level precision |
+| Docs, ADRs, specs (`**/*.md`, `_bmad-output/**`) | claude | Long-form prose, argumentative reasoning |
+| Ops: CI workflows, Dockerfiles, shell, deploy | claude + codex (dual) | High blast radius — sequencing + shell/YAML precision |
+| Tests | codex | Test logic = tight code |
+| Everything else (default) | codex | Handles general code well |
+
+DeepSeek stays available as a last-resort fallback but is never preferred
+over codex or claude — see `fallback_chains` in the TOML.
 
 ### Self-model exclusion
 
@@ -126,7 +154,7 @@ These rules exist because reviewers can always find more nits if you let them:
 ---
 
 **Action taken**: <"posted COMPLETION" | "pushing fixup, re-review next round" | "escalated via DECISION (reason)">
-**Round**: <N> / 2
+**Round**: <N> / <MAX_ROUNDS>
 ```
 
 ## Escalation format — DECISION
@@ -148,8 +176,8 @@ Operator picks an option in the RESPONSE.
 ## Configuration
 
 - Per-host overrides: `.claude/skills/bmad-team-review/customize.sh` (reviewer commands, fallback chains)
-- Per-project overrides: `.claude/skills/bmad-team-review/customize.toml` in the project root, if present
-- Mapping: `lib/reviewer-mapping.yaml` (edit to add new path categories)
+- Skill default mapping: `lib/reviewer-mapping.toml` (path categories, size overrides, stopping rules)
+- Per-project mapping override: `_bmad/team/reviewer-mapping.toml` at the consuming repo's root — replaces the default wholesale when present
 
 ## What this skill does NOT do
 
@@ -159,6 +187,7 @@ Operator picks an option in the RESPONSE.
 
 ## Roadmap
 
-- v1 (this version): path-based reviewer pick, codex working, claude / deepseek as command hooks, 2-round cap, P3 ignore.
-- v2: capability detection (skip a reviewer that's not installed), per-project mapping override, per-finding-category routing (route an arch finding to claude even if codex is the primary).
+- v1: path-based reviewer pick, codex working, claude / deepseek as command hooks, bounded rounds, P3 ignore.
+- v1.1 (2026-08-02, this version): per-project mapping override via `_bmad/team/reviewer-mapping.toml`; repositioned against official bmad-loop's `[adapter.review]`.
+- v2: capability detection (skip a reviewer that's not installed), per-finding-category routing (route an arch finding to claude even if codex is the primary).
 - v3: cost cap (per-PR / per-day), reviewer-history learning (track which reviewer flags what kinds of issues, weight findings).

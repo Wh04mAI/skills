@@ -14,23 +14,27 @@ The repo hosts two groups of skills:
 ### BMAD-Team — multi-agent SDLC extension
 
 A coherent set of skills that extends the [BMAD methodology](https://github.com/bmad-code-org/BMAD-METHOD)
-to **multi-agent, multi-environment software delivery**. BMAD core
-provides a single-threaded agentic SDLC; BMAD-Team adds what BMAD
-does not cover natively: parallel multi-agent coordination, an
-explicit implement-loop with cross-model pre-merge review, hygienic
-squash-merge, and remote-environment delivery.
+to **multi-agent, multi-environment software delivery**. Since
+2026-08 the positioning is **official-first**: the inner implement
+loop belongs to BMAD's official
+[bmad-loop](https://github.com/bmad-code-org/bmad-loop) module, and
+BMAD-Team supplies only what upstream does not have — the **GitHub
+coordination layer**: draft-PR claims via the `ORCHESTRATE:*` marker
+protocol, path-routed cross-model review, hygienic squash-merge, and
+remote-environment delivery. See the charter's "Direction
+(2026-08-02)" section for the reasoning.
 
 ```
 bmad-team/                 # Charter + shared protocol spec (NOT a skill)
   charter.md               # What BMAD-Team is and why it exists
   protocol.md              # ORCHESTRATE:* marker spec (novel piece)
 
-bmad-team-claim/           # Skill: claim a story via worktree + draft PR
-bmad-team-dev/             # Skill: drive implement → verify → review inner loop
-bmad-team-review/          # Skill: cross-model pre-merge review (called by -dev)
-bmad-team-merge/           # Skill: squash-merge + clean up worktree/branches/issue
-bmad-team-orchestrate/     # Skill: dispatch & monitor parallel agents
-bmad-team-deploy/          # Skill: ship branch to dev / staging k3s env
+bmad-team-claim/           # Skill: claim a story via worktree + draft PR (core asset)
+bmad-team-dev/             # Skill: PR-flow shell; inner loop delegates to official bmad-loop
+bmad-team-review/          # Skill: cross-model review routing + stop rules (called by -dev)
+bmad-team-merge/           # Skill: squash-merge + clean up worktree/branches/issue (core asset)
+bmad-team-orchestrate/     # Skill: marker monitor (DECISION/APPROVAL); dispatch role is legacy
+bmad-team-deploy/          # Skill: ship branch to dev / staging k3s env (project CD glue)
                            # (bmad-team-verify is deferred — see charter Roadmap)
 
 _bmad/team/config.yaml.example   # Unified per-project config template
@@ -76,8 +80,10 @@ Copy `_bmad/team/config.yaml.example` to `{your-project}/_bmad/team/config.yaml`
 ## Status
 
 - `model-fingerprint-interrogator`: standalone, production-ready.
-- `bmad-team-*`: v0 internal. The protocol spec at `bmad-team/protocol.md`
-  is the candidate for eventual external publication (working title:
+- `bmad-team-*`: v0.1 internal, official-first alignment landed 2026-08-02
+  (inner loop delegated to official bmad-loop; this repo keeps the GitHub
+  coordination layer). The protocol spec at `bmad-team/protocol.md` is the
+  candidate for eventual external publication (working title:
   `pr-claim-protocol`).
 
 ## License
