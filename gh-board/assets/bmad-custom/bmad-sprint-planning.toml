@@ -1,0 +1,7 @@
+# 团队定制：本项目不用 sprint-status.yaml。这个技能唯一的产出就是这个文件，所以直接拦下来。
+
+[workflow]
+
+activation_steps_prepend = [
+  "停下，不要执行本技能，也不要创建 sprint-status.yaml。告诉用户：本项目的任务状态记在 GitHub 上，规划用 gh-board 技能的「发布 epic 和故事」，看进度用它的「查看进度」。",
+]

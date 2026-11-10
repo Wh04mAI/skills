@@ -1,91 +1,28 @@
 # Wh04mAI Skills
 
-Central repository for Wh04mAI's shared Claude Code / Claude Agent SDK skills.
+Wh04mAI 团队共享的 Claude Code 技能。每个目录是一个独立的技能，可以单独安装。
 
-## What's in here
+## 有哪些技能
 
-The repo hosts two groups of skills:
+- **[`gh-board`](./gh-board)**：把 GitHub issue 和草稿 PR 当作任务看板，配合 BMAD 使用。负责把 epic 和故事发布成 issue、认领、转评审、放弃释放、合并后清理和查看进度。认领靠「同名分支只能被创建一次」来保证两个 agent 不会撞车，这一点在真实仓库上实测过。新仓库接入前要先做几项仓库设置，见技能里的「新仓库接入」一节。
+- **[`priority-tags`](./priority-tags)**：管理 GitHub 仓库的优先级标签。初始化一套 MoSCoW 加紧急事故的标签，打标签时保证同一 issue 只有一个优先级，并做分诊和健康检查。和 `gh-board` 分工明确：它只管优先级标签，`gh-board` 只管状态标签。
+- **[`claude-code-hook-design`](./claude-code-hook-design)**：设计和排查 Claude Code 里拦截危险命令的钩子，让它既拦得住，又不误伤正常命令。
+- **[`agent-fallback-idempotency`](./agent-fallback-idempotency)**：长任务同时设了完成通知和兜底定时器时，让兜底唤醒先检查工作是否已经做完，避免重复执行。
 
-### Standalone skills
+## 安装
 
-- **[`model-fingerprint-interrogator`](./model-fingerprint-interrogator)** — Verify whether an LLM gateway's claimed model is genuine. Combines smoke-signal detection on raw HTTP probes, TLS fingerprint spoofing via `curl_cffi`, differential testing against a baseline Anthropic endpoint, and a forensic Markdown report. Use for pre-purchase due-diligence on relay providers or periodic re-audit of upstream vendors.
-- **[`priority-tags`](./priority-tags)** — Manage MoSCoW + incident priority labels on a GitHub repo. Bootstrap the label set, apply `priority/now|must|should|could|wont` to issues/PRs with mutual exclusion, run a triage pass, and produce a health report (stale incidents, must-inflation). Built for small teams that want one consistent priority scheme across all their repos.
-
-### BMAD-Team — multi-agent SDLC extension
-
-A coherent set of skills that extends the [BMAD methodology](https://github.com/bmad-code-org/BMAD-METHOD)
-to **multi-agent, multi-environment software delivery**. Since
-2026-08 the positioning is **official-first**: the inner implement
-loop belongs to BMAD's official
-[bmad-loop](https://github.com/bmad-code-org/bmad-loop) module, and
-BMAD-Team supplies only what upstream does not have — the **GitHub
-coordination layer**: draft-PR claims via the `ORCHESTRATE:*` marker
-protocol, path-routed cross-model review, hygienic squash-merge, and
-remote-environment delivery. See the charter's "Direction
-(2026-08-02)" section for the reasoning.
-
-```
-bmad-team/                 # Charter + shared protocol spec (NOT a skill)
-  charter.md               # What BMAD-Team is and why it exists
-  protocol.md              # ORCHESTRATE:* marker spec (novel piece)
-
-bmad-team-claim/           # Skill: claim a story via worktree + draft PR (core asset)
-bmad-team-dev/             # Skill: PR-flow shell; inner loop delegates to official bmad-loop
-bmad-team-review/          # Skill: cross-model review routing + stop rules (called by -dev)
-bmad-team-merge/           # Skill: squash-merge + clean up worktree/branches/issue (core asset)
-bmad-team-orchestrate/     # Skill: marker monitor (DECISION/APPROVAL); dispatch role is legacy
-bmad-team-deploy/          # Skill: ship branch to dev / staging k3s env (project CD glue)
-                           # (bmad-team-verify is deferred — see charter Roadmap)
-
-_bmad/team/config.yaml.example   # Unified per-project config template
-```
-
-The single-agent pipeline runs: `bmad-team-claim` → [HUMAN CONFIRM] →
-`bmad-team-dev` (inner loop wraps `bmad-team-review`) → [HUMAN CONFIRM] →
-`bmad-team-merge`. `bmad-team-orchestrate` runs multiple such pipelines
-in parallel; `bmad-team-deploy` runs after merge for environments that
-need it.
-
-Start with [`bmad-team/charter.md`](./bmad-team/charter.md) to understand the model.
-
-## Installing a skill
-
-### Standalone (single skill)
+单个技能用 skills 命令行安装：
 
 ```bash
-# Symlink into your Claude Code skills directory
-ln -s "$PWD/<skill-name>" ~/.claude/skills/<skill-name>
+npx skills add Wh04mAI/skills@<技能名>
 ```
 
-Or via the skills CLI:
+也可以克隆本仓库，把技能目录软链接到 Claude Code 的技能目录：
 
 ```bash
-npx skills add Wh04mAI/skills@<skill-name>
+ln -s "$PWD/<技能名>" ~/.claude/skills/<技能名>
 ```
 
-### BMAD-Team (whole bundle)
+## 许可
 
-Add this repo as a git submodule at `.claude/skills` in your project:
-
-```bash
-git submodule add git@github.com:Wh04mAI/skills.git .claude/skills
-git submodule update --init --recursive
-
-# Later, pull latest:
-git submodule update --remote --merge
-```
-
-Copy `_bmad/team/config.yaml.example` to `{your-project}/_bmad/team/config.yaml` and edit for your environment.
-
-## Status
-
-- `model-fingerprint-interrogator`: standalone, production-ready.
-- `bmad-team-*`: v0.1 internal, official-first alignment landed 2026-08-02
-  (inner loop delegated to official bmad-loop; this repo keeps the GitHub
-  coordination layer). The protocol spec at `bmad-team/protocol.md` is the
-  candidate for eventual external publication (working title:
-  `pr-claim-protocol`).
-
-## License
-
-MIT.
+MIT。
