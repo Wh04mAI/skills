@@ -1,19 +1,13 @@
-# Local-only overrides (never commit secrets / host-specific paths)
-**/customize.sh
-**/customize.local.sh
-**/customize.local.toml
-_bmad/team/config.yaml
-
-# Python caches in orchestrate lib
+# Python 缓存
 __pycache__/
 *.pyc
-*.pyo
-.venv/
 
-# Editor / OS
+# 编辑器和系统文件
 .DS_Store
 .idea/
 .vscode/
 *.swp
+
+# 本机私有目录
 private/
 utils/

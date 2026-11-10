@@ -1,3 +1,0 @@
-# Per-host overrides (DeepSeek CLI path, model overrides, etc.).
-# Keep host-specific so cross-machine teammates don't import each other's setup.
-customize.sh
