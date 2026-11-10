@@ -1,7 +1,0 @@
-# Python cache
-__pycache__/
-*.pyc
-*.pyo
-
-# Per-worktree venv (auto-created by bootstrap)
-.venv/
