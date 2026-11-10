@@ -1,0 +1,14 @@
+# 团队定制：任务状态记在 GitHub 上，由 gh-board 技能管理。
+
+[workflow]
+
+persistent_facts = [
+  "本项目的任务状态记在 GitHub 的 issue、标签和草稿 PR 上，由 gh-board 技能管理。不要创建或更新 sprint-status.yaml。",
+]
+
+# 认领必须在开工之前、并且在另一个会话里完成：本技能启动时就把路径固定在当前目录了，中途切到 worktree 会让 spec 和代码分处两地。
+activation_steps_prepend = [
+  "如果这次要做的工作对应一个 GitHub issue（用户给了 #N 或 issue 链接），先用 `git branch --show-current` 检查当前分支。是 `claim/issue-<N>` 就继续。不是的话停下，不要开工，告诉用户：先用 gh-board 技能认领这个 issue，再到 `.worktrees/issue-<N>` 里新开一个会话来做。",
+]
+
+on_complete = "如果当前分支是 `claim/issue-<N>`，问用户是否转评审；同意的话按 gh-board 技能的「转评审」把草稿 PR 转成正式 PR。"

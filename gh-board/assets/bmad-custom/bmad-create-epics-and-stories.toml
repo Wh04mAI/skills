@@ -1,0 +1,5 @@
+# 团队定制：拆完的 epic 和故事发布到 GitHub，作为任务看板。
+
+[workflow]
+
+on_complete = "问用户是否把这些 epic 和故事发布成 GitHub issue。同意的话，按 gh-board 技能的「发布 epic 和故事」执行。"
