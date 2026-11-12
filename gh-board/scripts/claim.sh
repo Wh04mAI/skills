@@ -15,7 +15,9 @@ warn() { echo "警告：$*" >&2; }
 STATE="$(gh issue view "${N}" --json state --jq .state)" || die "找不到 issue #${N}"
 [ "${STATE}" = "OPEN" ] || die "issue #${N} 已关闭"
 
-git -C "${ROOT}" fetch -q origin main
+# 认领分支从仓库默认分支拉出，也合回默认分支。PR 正文里的 Closes #N 只在合进默认分支时才会自动关闭 issue。
+BASE="$(gh repo view --json defaultBranchRef --jq .defaultBranchRef.name)" || die "查不到仓库的默认分支"
+git -C "${ROOT}" fetch -q origin "${BASE}"
 
 if [ -d "${WT}" ]; then
   # 本地已有这个 worktree：只有当远端分支就是它推上去的，才算自己的认领，接着补后面的步骤。
@@ -24,7 +26,7 @@ if [ -d "${WT}" ]; then
   git -C "${WT}" merge-base --is-ancestor "${REMOTE_SHA}" HEAD 2>/dev/null || die "${WT} 和远端 ${BRANCH} 对不上，可能不是你的认领"
   echo "继续补齐 #${N} 的认领"
 else
-  git -C "${ROOT}" worktree add -q -b "${BRANCH}" "${WT}" origin/main
+  git -C "${ROOT}" worktree add -q -b "${BRANCH}" "${WT}" "origin/${BASE}"
   git -C "${WT}" commit -q --allow-empty -m "claim: #${N} by ${AGENT}"
   # 冒号后为空表示「要求远端不存在这个分支」。同时推送时 GitHub 服务端只让一个成功，这一步就是互斥锁。
   if ! git -C "${WT}" push -q --force-with-lease="refs/heads/${BRANCH}:" origin "HEAD:refs/heads/${BRANCH}" 2>/dev/null; then
@@ -40,7 +42,7 @@ fi
 # 以下步骤失败不影响认领本身，重跑本脚本即可补齐。
 if [ -z "$(gh pr list --head "${BRANCH}" --state open --json number --jq '.[].number')" ]; then
   TITLE="$(gh issue view "${N}" --json title --jq .title)"
-  gh pr create --draft --base main --head "${BRANCH}" --title "${TITLE} (#${N})" \
+  gh pr create --draft --base "${BASE}" --head "${BRANCH}" --title "${TITLE} (#${N})" \
     --body "$(printf 'Closes #%s\n\n认领者：%s' "${N}" "${AGENT}")" >/dev/null \
     && echo "已开草稿 PR" || warn "草稿 PR 没开成，重跑本脚本补齐"
 fi

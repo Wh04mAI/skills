@@ -28,9 +28,10 @@ description: 把 GitHub issue 和草稿 PR 当作 BMAD 的任务看板。负责�
 
    私有仓库要组织是 Team 及以上套餐，规则集才会生效。
 2. **合并后自动删除分支。** 删除分支就是释放认领，不打开的话，PR 合并后认领会一直挂着：`gh api -X PATCH repos/<owner>/<repo> -F delete_branch_on_merge=true`。
-3. **忽略 worktree 目录。** 在 `.gitignore` 里加一行 `.worktrees/`。
-4. **初始化标签。** 见下面的「初始化标签」。
-5. **项目用 BMAD 的话，复制定制文件。** 把本技能 `assets/bmad-custom/` 下的三个文件复制到项目的 `_bmad/custom/`。它们让 `bmad-build` 开工前检查认领、做完后问是否转评审，让拆完故事后问是否发布成 issue，并拦下只会生成 `sprint-status.yaml` 的 `bmad-sprint-planning`。
+3. **默认分支设成开发集成分支。** 认领分支从仓库默认分支拉出，也合回默认分支。只有 `main` 一条长期分支的仓库不用改。如果仓库用 `dev`、`staging`、`main` 这类对应部署环境的分支，要把日常开发合进去的那条（通常是 `dev`）设成默认分支：PR 正文里的 `Closes #N` 只有合进默认分支时才会自动关闭 issue。这时还要用规则集禁止删除这几条环境分支，否则开了第 2 项之后，晋级 PR 一合并，源分支就会被自动删掉。
+4. **忽略 worktree 目录。** 在 `.gitignore` 里加一行 `.worktrees/`。
+5. **初始化标签。** 见下面的「初始化标签」。
+6. **项目用 BMAD 的话，复制定制文件。** 把本技能 `assets/bmad-custom/` 下的三个文件复制到项目的 `_bmad/custom/`。它们让 `bmad-build` 开工前检查认领、做完后问是否转评审，让拆完故事后问是否发布成 issue，并拦下只会生成 `sprint-status.yaml` 的 `bmad-sprint-planning`。
 
 ## 约定
 
@@ -42,7 +43,7 @@ description: 把 GitHub issue 和草稿 PR 当作 BMAD 的任务看板。负责�
 
 **worktree。** 每个认领对应一个 worktree，位置固定在仓库根目录下的 `.worktrees/issue-<N>`，这个目录已在 `.gitignore` 里忽略。认领后，这个 issue 的所有改动都在这个 worktree 里完成。
 
-**分支上只追加，不改写。** 接入时加的规则集禁止对 `claim/**` 强制推送，这是认领互斥的保障，不要试图绕开。写错了就追加修正提交；要跟上 `main` 就把 `main` 合并进来，不要 rebase。最终用压缩合并进 `main`，分支上的中间提交不会留下。
+**分支上只追加，不改写。** 接入时加的规则集禁止对 `claim/**` 强制推送，这是认领互斥的保障，不要试图绕开。写错了就追加修正提交；要跟上默认分支就把它合并进来，不要 rebase。最终用压缩合并进默认分支，分支上的中间提交不会留下。
 
 ## 动作
 
@@ -75,7 +76,7 @@ bash {skill-root}/scripts/claim.sh <issue号> [agent标识]
 agent 标识默认是 `claude@<短主机名>`，同一台机器上同时开多个会话时，给每个会话传一个不同的标识。脚本做的事，按顺序：
 
 1. 确认 issue 存在且未关闭。
-2. 从最新的 `origin/main` 建 `.worktrees/issue-<N>` 和本地分支 `claim/issue-<N>`，做一个写着认领者的空提交。
+2. 从仓库默认分支的最新提交建 `.worktrees/issue-<N>` 和本地分支 `claim/issue-<N>`，做一个写着认领者的空提交。
 3. 用「只在远端不存在该分支时才创建」的方式推送。这一步决定谁拿到认领，GitHub 服务端保证同时推送时只有一个成功。
 4. 开草稿 PR，标题为「issue 标题 (#N)」，正文含 `Closes #N`。
 5. 把 issue 指派给当前 GitHub 账号，状态标签换成 `in-progress`。
